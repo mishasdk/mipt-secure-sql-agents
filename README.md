@@ -1,5 +1,17 @@
 # mipt-secure-sql-agents
 
-Multi-agent system that generates PostgreSQL queries from natural language, audits them for security issues, and iteratively fixes them with full audit logging. Developed as part of a MIPT practical course project.
+Мультиагентная система, которая генерирует запросы PostgreSQL на естественном языке, проверяет их на наличие проблем с безопасностью и итеративно устраняет их с полным протоколированием аудита. Разработана в рамках проекта практического курса МФТИ.
 
-## TODO
+## Начало работы
+
+1. Создать venv и активировать:
+
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
+2. Установить зависимости из requirements.txt:
+
+    ```bash
+    pip install -r requirements.txt
+    ```
