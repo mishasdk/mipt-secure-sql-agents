@@ -24,3 +24,9 @@
     ```sh
     pip install -r requirements.txt
     ```
+
+3. Создать локальный .env фалы с секретами для запуска приложения.
+
+    ```sh
+    OPEN_ROUTER_API_KEY=<your_api_key>
+    ```
