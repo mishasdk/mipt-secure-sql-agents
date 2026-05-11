@@ -42,7 +42,8 @@
 
 ```json
 {
-  "sql": "SELECT ..."
+  "sql": "SELECT ...",
+  "tables_used": ["customers", "orders"]
 }
 ```
 
@@ -71,15 +72,15 @@
 
 ### Output
 
-- risk_score - чем больше тем хуже
-- status - enum(REJECTED, APPROVED)
+- risk_score - float от 0 (безопасно) до 10 (критично), чем больше тем хуже
+- verdict - enum(REJECTED, APPROVED); APPROVED только если нет HIGH и MEDIUM проблем
 - severity - enum(LOW, MEDIUM, HIGH)
 - type - enum(SEMANTIC, SECURITY, SYNTAX, PERFORMANCE, POLICY, SCHEMA)
 
 ```json
 {
-  "status": "REJECTED",
-  "risk_score": 4,
+  "verdict": "REJECTED",
+  "risk_score": 4.5,
   "issues": [
     {
       "type": "SEMANTIC",
