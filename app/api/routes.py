@@ -7,6 +7,9 @@ from pydantic import BaseModel
 from app.logger import get_logger, setup_logging
 from app.orchestrator.runner import run
 
+
+_startup_time = time.time()
+
 logger = get_logger(__name__)
 
 
@@ -28,6 +31,11 @@ async def log_requests(request: Request, call_next):
     ms = (time.perf_counter() - t0) * 1000
     logger.info("%s %s %d %.1fms", request.method, request.url.path, response.status_code, ms)
     return response
+
+
+@app.get("/health", summary="Health check")
+def health():
+    return {"status": "ok", "uptime_seconds": round(time.time() - _startup_time)}
 
 
 class GenerateRequest(BaseModel):

@@ -29,4 +29,14 @@
 
     ```sh
     OPEN_ROUTER_API_KEY=<your_api_key>
+    MODEL_NAME=openai/gpt-4o-mini
+    PORT=8000
     ```
+
+## Запуск
+
+```sh
+docker compose up
+```
+
+Код монтируется из текущей директории — сервер перезапускается при изменении файлов. Переменные окружения читаются из `.env`.
