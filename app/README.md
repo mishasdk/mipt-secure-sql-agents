@@ -17,6 +17,15 @@ app/
 └── main.py         # точка входа CLI
 ```
 
+## Переменные окружения
+
+Создайте `.env` в корне проекта:
+
+```dotenv
+OPEN_ROUTER_API_KEY=sk-or-v1-...   # API-ключ OpenRouter (обязательно)
+MODEL_NAME=openai/gpt-4o-mini      # модель в формате provider/model (обязательно)
+```
+
 ## Запуск локально
 
 ### 1. CLI
