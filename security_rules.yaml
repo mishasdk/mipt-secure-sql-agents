@@ -1,0 +1,48 @@
+allowlist:
+  - users
+  - orders
+  - products
+
+rules:
+  - id: "R01"
+    name: "no_select_star"
+    description: "SELECT * exposes all columns including sensitive ones"
+    severity: MEDIUM
+    type: SECURITY
+    check: ast
+    ast_check:
+      node_type: A_Star
+      message: "SELECT * exposes all columns, replace with explicit column list"
+
+  - id: "R02"
+    name: "dml_requires_where"
+    description: "UPDATE/DELETE without WHERE affects all rows"
+    severity: HIGH
+    type: SECURITY
+    check: ast
+    ast_check:
+      node_type: UpdateStmt | DeleteStmt
+      condition: "whereClause is None"
+      message: "DML statement without WHERE clause"
+
+  - id: "R03"
+    name: "limit_required"
+    description: "SELECT should have LIMIT to prevent excessive data retrieval"
+    severity: LOW
+    type: PERFORMANCE
+    check: ast
+    ast_check:
+      node_type: SelectStmt
+      condition: "limitClause is None"
+      message: "Missing LIMIT clause"
+
+  - id: "R04"
+    name: "table_allowlist"
+    description: "All referenced tables must be in the allowlist"
+    severity: HIGH
+    type: POLICY
+    check: ast
+    ast_check:
+      node_type: RangeVar
+      condition: "relname not in allowlist"
+      message: "Table not in allowed list"
