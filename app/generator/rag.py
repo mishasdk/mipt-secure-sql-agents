@@ -22,7 +22,7 @@ class TableRetriever:
         self,
         ddl_path: Optional[Path] = None,
         ddl_text: Optional[str] = None,
-        embedding_model: str = "perplexity/pplx-embed-v1-4b",
+        embedding_model: Optional[str] = None,
         cache_dir: Optional[Path] = None
     ):
         # Получаем конфигурацию приложения (содержит API-ключ OpenRouter)
@@ -232,10 +232,13 @@ def get_retriever() -> TableRetriever:
     global _retriever
     # Если ретривер ещё не создан — создаём его с реальным файлом data_model.sql
     if _retriever is None:
-        # Определяем путь к файлу схемы
-        script_dir = Path(__file__).resolve().parent
-        # Берём data_model.sql
-        ddl_path = script_dir.parent / "data_model.sql"
+        # Берем путь к файлу из config
+        config = get_config()
+        ddl_path = Path(config.schema_ddl_path)
+        if not ddl_path.is_absolute():
+            # если путь относительный, считаем от корня проекта
+            root = Path(__file__).resolve().parent.parent.parent
+            ddl_path = root / config.schema_ddl_path
         _retriever = TableRetriever(ddl_path=ddl_path)
     return _retriever
 
@@ -245,8 +248,11 @@ def get_full_schema() -> dict:
     global _full_schema
     # Если схема ещё не загружена — загружаем и парсим
     if _full_schema is None:
-        script_dir = Path(__file__).resolve().parent
-        ddl_path = script_dir.parent / "data_model.sql"
+        config = get_config()
+        ddl_path = Path(config.schema_ddl_path)
+        if not ddl_path.is_absolute():
+            root = Path(__file__).resolve().parent.parent.parent
+            ddl_path = root / config.schema_ddl_path
         _full_schema = parse_ddl(ddl_path.read_text(encoding="utf-8"))
     return _full_schema
 
