@@ -14,17 +14,26 @@ class Config(BaseModel):
     max_iterations: int = 3
     risk_threshold: float = 4.0
 
+    # Модель ембеддингов и путь к схеме БД
+    embedding_model: str = os.getenv(
+        "EMBEDDING_MODEL", "perplexity/pplx-embed-v1-4b")
+    schema_ddl_path: str = os.getenv("SCHEMA_DDL_PATH", "app/data_model.sql")
+
     @field_validator("open_router_api_key")
     @classmethod
     def require_api_key(cls, v: str) -> str:
-        if not v: raise ValueError("OPEN_ROUTER_API_KEY is not set")
+        if not v:
+            raise ValueError("OPEN_ROUTER_API_KEY is not set")
         return v
 
     @field_validator("model_name")
     @classmethod
     def validate_model_name(cls, v: str) -> str:
-        if not v: raise ValueError("MODEL_NAME cannot be empty")
-        if "/" not in v: raise ValueError("MODEL_NAME must be in 'provider/model' format, e.g. 'openai/gpt-4o-mini'")
+        if not v:
+            raise ValueError("MODEL_NAME cannot be empty")
+        if "/" not in v:
+            raise ValueError(
+                "MODEL_NAME must be in 'provider/model' format, e.g. 'openai/gpt-4o-mini'")
         return v
 
 
