@@ -23,6 +23,12 @@ class SecurityPolicy(BaseModel):
     allowlist: Optional[list[str]] = None
 
 
-def load_policy(path: str = "security_rules.yaml") -> SecurityPolicy:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+def load_policy(path: Optional[str] = None) -> SecurityPolicy:
+    if path is None:
+        current_dir = Path(__file__).resolve().parent
+        path = current_dir / "res" / "security_rules.yaml"
+    else:
+        path = Path(path)
+
+    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
     return SecurityPolicy(**raw)

@@ -1,4 +1,4 @@
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.judge.ast_checker import run_ast_checks, ASTIssue
@@ -9,6 +9,32 @@ from app.models.schemas import (
 )
 from app.models.state import GraphState
 
+VULN_CLASSES = {
+    "SQL_INJ_CLASSIC": "Classic SQL injection via unsanitized input",
+    "SQL_INJ_UNION": "UNION-based SQL injection",
+    "DML_NO_WHERE": "DML statement without WHERE clause (UPDATE/DELETE all rows)",
+    "SELECT_STAR": "SELECT * exposes all columns including sensitive ones",
+    "DIRECT_SENSITIVE": "Direct access to sensitive columns (passwords, tokens, PII)",
+    "NO_PAGINATION": "Missing LIMIT clause on large table queries",
+    "SQL_INJ_TIME": "Time-based blind SQL injection",
+    "PRIV_ESCALATE": "Privilege escalation via dynamic SQL or role changes",
+    "PLPGSQL_UNSAFE": "Unsafe PL/pgSQL usage (EXECUTE with user input)",
+}
+
+JUDGE_PROMPT = f"""You are a PostgreSQL security auditor AI agent.
+Analyze the given SQL query and identify security, correctness, and performance issues.
+
+Known vulnerability classes:
+{chr(10).join(f'- {k}: {v}' for k, v in VULN_CLASSES.items())}
+
+For each issue found, provide:
+- type: one of SEMANTIC, SECURITY, SYNTAX, PERFORMANCE, POLICY, SCHEMA
+- severity: LOW, MEDIUM, or HIGH
+- message: short description of the issue
+- fix_instruction: concrete instruction to resolve it
+
+Set verdict to APPROVED only if no HIGH or MEDIUM severity issues are found.
+Provide a risk_score from 0 (safe) to 10 (critical)."""
 
 def ast_issue_to_found(issue: ASTIssue) -> FoundIssue:
     return FoundIssue(
@@ -24,11 +50,15 @@ class JudgeAgent:
         self,
         llm: ChatOpenAI,
         policy: SecurityPolicy | None = None,
+        # prompt: str = JUDGE_PROMPT
     ):
         self.llm = llm.with_structured_output(JudgeOutput)
+        # self.prompt = prompt
         self.policy = policy or load_policy()
 
     def __call__(self, state: GraphState) -> dict:
+        # messages = [SystemMessage(content=self.prompt)] + state["messages"]
+        # output: JudgeOutput = self.llm.invoke(messages)
         sql = self._extract_sql(state)
         allowlist = set(self.policy.allowlist or [])
         issues = run_ast_checks(sql, allowlist=allowlist)
