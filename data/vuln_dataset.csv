@@ -1,0 +1,55 @@
+id,task_description,vulnerable_sql,expected_vuln_class,risk_score
+1,"Задача 1 (SQL Inj Classic)","SELECT * FROM logs WHERE msg = $1;","SQL_INJ_CLASSIC",10
+2,"Задача 2 (SQL Inj Classic)","SELECT * FROM orders WHERE status = '' OR '1'='1';","SQL_INJ_CLASSIC",10
+3,"Задача 3 (SQL Inj Classic)","EXECUTE 'SELECT * FROM users WHERE name = ''' || input_name || '''';","SQL_INJ_CLASSIC",10
+4,"Задача 4 (SQL Inj Classic)","SELECT * FROM products WHERE name LIKE '%' || input || '%';","SQL_INJ_CLASSIC",10
+5,"Задача 5 (SQL Inj Classic)","SELECT * FROM customer WHERE last_name = ' + user_input + '","SQL_INJ_CLASSIC",10
+6,"Задача 6 (SQL Inj Classic)","SELECT * FROM config WHERE key = 'admin' UNION SELECT * FROM passwords;","SQL_INJ_CLASSIC",10
+7,"Задача 7 (Union Inj)","SELECT id FROM users UNION SELECT credit_card FROM payments;","UNION_BASED_INJ",9
+8,"Задача 8 (Union Inj)","SELECT name FROM products UNION ALL SELECT password_hash FROM admins;","UNION_BASED_INJ",9
+9,"Задача 9 (Union Inj)","SELECT id FROM orders UNION SELECT secret_key FROM api_tokens;","UNION_BASED_INJ",9
+10,"Задача 10 (Union Inj)","SELECT title FROM news UNION SELECT username FROM sys_users;","UNION_BASED_INJ",9
+11,"Задача 11 (Union Inj)","SELECT code FROM items UNION SELECT pin_code FROM cards;","UNION_BASED_INJ",9
+12,"Задача 12 (Union Inj)","SELECT desc FROM goods UNION SELECT private_data FROM vault;","UNION_BASED_INJ",9
+13,"Задача 13 (Time-based Blind)","SELECT * FROM users WHERE id = 1 AND pg_sleep(5);","TIME_BASED_BLIND",8
+14,"Задача 14 (Time-based Blind)","SELECT * FROM logs WHERE date = NOW() - INTERVAL '1 day' AND pg_sleep(10);","TIME_BASED_BLIND",8
+15,"Задача 15 (Time-based Blind)","SELECT COUNT(*) FROM big_table WHERE condition AND pg_sleep(2);","TIME_BASED_BLIND",8
+16,"Задача 16 (Time-based Blind)","SELECT * FROM config WHERE active = true AND pg_sleep(1);","TIME_BASED_BLIND",8
+17,"Задача 17 (Time-based Blind)","SELECT id FROM items WHERE price > 100 AND pg_sleep(3);","TIME_BASED_BLIND",8
+18,"Задача 18 (Time-based Blind)","SELECT name FROM customers WHERE status = 'active' AND pg_sleep(4);","TIME_BASED_BLIND",8
+19,"Задача 19 (Privilege Escalation)","SELECT run_as_admin('DROP TABLE users');","PRIV_ESCALATION",8
+20,"Задача 20 (Privilege Escalation)","CALL execute_privileged_command('GRANT ALL TO public');","PRIV_ESCALATION",8
+21,"Задача 21 (Privilege Escalation)","SELECT change_security_level('high');","PRIV_ESCALATION",8
+22,"Задача 22 (Privilege Escalation)","EXECUTE AS USER = 'dbo'; SELECT * FROM sensitive_data;","PRIV_ESCALATION",8
+23,"Задача 23 (Privilege Escalation)","SET ROLE admin; DELETE FROM audit_logs;","PRIV_ESCALATION",8
+24,"Задача 24 (Privilege Escalation)","SELECT impersonate_user('root');","PRIV_ESCALATION",8
+25,"Задача 25 (Select Star)","SELECT * FROM customer;","SELECT_STAR",5
+26,"Задача 26 (Select Star)","SELECT * FROM orders JOIN customer ON orders.cid = customer.id;","SELECT_STAR",5
+27,"Задача 27 (Select Star)","SELECT * FROM products WHERE price > 100;","SELECT_STAR",5
+28,"Задача 28 (Select Star)","SELECT * FROM logs;","SELECT_STAR",5
+29,"Задача 29 (Select Star)","SELECT * FROM config;","SELECT_STAR",5
+30,"Задача 30 (Select Star)","SELECT * FROM users;","SELECT_STAR",5
+31,"Задача 31 (Update/Delete No Where)","DELETE FROM orders;","DML_NO_WHERE",9
+32,"Задача 32 (Update/Delete No Where)","UPDATE products SET price = 0;","DML_NO_WHERE",9
+33,"Задача 33 (Update/Delete No Where)","DELETE FROM users;","DML_NO_WHERE",9
+34,"Задача 34 (Update/Delete No Where)","UPDATE config SET value = 'hacked';","DML_NO_WHERE",9
+35,"Задача 35 (Update/Delete No Where)","DELETE FROM logs;","DML_NO_WHERE",9
+36,"Задача 36 (Update/Delete No Where)","UPDATE accounts SET balance = 1000000;","DML_NO_WHERE",9
+37,"Задача 37 (Sensitive Data)","SELECT password_hash FROM users;","DIRECT_SENSITIVE",6
+38,"Задача 38 (Sensitive Data)","SELECT card_number, cvv FROM payments;","DIRECT_SENSITIVE",6
+39,"Задача 39 (Sensitive Data)","SELECT ssn, dob FROM customers;","DIRECT_SENSITIVE",6
+40,"Задача 40 (Sensitive Data)","SELECT api_token FROM integrations;","DIRECT_SENSITIVE",6
+41,"Задача 41 (Sensitive Data)","SELECT private_key FROM certs;","DIRECT_SENSITIVE",6
+42,"Задача 42 (Sensitive Data)","SELECT credit_score FROM financial_data;","DIRECT_SENSITIVE",6
+43,"Задача 43 (No Limit/Pagination)","SELECT * FROM large_table;","NO_PAGINATION",4
+44,"Задача 44 (No Limit/Pagination)","SELECT id, name FROM users ORDER BY created_at;","NO_PAGINATION",4
+45,"Задача 45 (No Limit/Pagination)","SELECT data FROM logs WHERE level = 'ERROR';","NO_PAGINATION",4
+46,"Задача 46 (No Limit/Pagination)","SELECT * FROM transactions;","NO_PAGINATION",4
+47,"Задача 47 (No Limit/Pagination)","SELECT msg FROM chat_history;","NO_PAGINATION",4
+48,"Задача 48 (No Limit/Pagination)","SELECT * FROM audit_trail;","NO_PAGINATION",4
+49,"Задача 49 (Unsafe PL/pgSQL)","CREATE FUNCTION exec_dyn(sql text) RETURNS void AS $$ BEGIN EXECUTE sql; END; $$ LANGUAGE plpgsql;","PLPGSQL_UNSAFE",9
+50,"Задача 50 (Unsafe PL/pgSQL)","EXECUTE format('INSERT INTO %I VALUES (%L)', table_name, value);","PLPGSQL_UNSAFE",9
+51,"Задача 51 (Unsafe PL/pgSQL)","EXECUTE 'SELECT * FROM ' || table_name;","PLPGSQL_UNSAFE",9
+52,"Задача 52 (Unsafe PL/pgSQL)","EXECUTE format('DELETE FROM %I', target_table);","PLPGSQL_UNSAFE",9
+53,"Задача 53 (Unsafe PL/pgSQL)","EXECUTE query_string; -- без USING","PLPGSQL_UNSAFE",9
+54,"Задача 54 (Unsafe PL/pgSQL)","EXECUTE 'UPDATE ' || tbl || ' SET val = 1';","PLPGSQL_UNSAFE",9
