@@ -1,4 +1,6 @@
 import json
+import time
+
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 
@@ -6,6 +8,9 @@ from app.fixer.schemas import FixerOutput
 from app.models.state import GraphState
 from app.prompts.fixer import FIXER_SYSTEM_PROMPT
 from app.generator.rag import get_full_schema, format_schema_text, get_retriever
+from app.logger import get_logger
+
+logger = get_logger("app.fixer")
 
 
 class FixerAgent:
@@ -48,8 +53,15 @@ class FixerAgent:
                 if hasattr(msg, "type") and msg.type == "human":
                     user_query = msg.content
                     break
+            logger.info("tool=retriever | action=fallback | query=%r", user_query[:120])
+            t0 = time.perf_counter()
             # Получаем топ-8 наиболее релевантных таблиц через векторный поиск
             relevant = self.retriever.retrieve(user_query, k=8)
+            logger.info(
+                "tool=retriever | elapsed=%.2fs | tables=%s",
+                time.perf_counter() - t0,
+                [t["name"] for t in relevant],
+            )
             tables_used = [t["name"] for t in relevant]
 
         # Фильтруем полную схему по этим таблицам
@@ -86,6 +98,13 @@ class FixerAgent:
                 for i in last_judge.issues
             )
 
+        logger.info(
+            "FixerAgent called | tables=%s | issues=%d | sql=%r",
+            tables_used,
+            len(last_judge.issues) if last_judge else 0,
+            last_sql[:80],
+        )
+
         # Формируем пользовательский запрос к фиксеру
         user_prompt = f"Текущий SQL:\n```sql\n{last_sql}\n```\nНарушения:\n{issues_text}"
         messages = [
@@ -95,7 +114,10 @@ class FixerAgent:
         ]
 
         # Вызываем LLM и получаем исправленный SQL в структурированном виде
+        logger.info("tool=llm | action=invoke | agent=fixer")
+        t0 = time.perf_counter()
         output: FixerOutput = self.llm.invoke(messages)
+        logger.info("tool=llm | elapsed=%.2fs | sql=%r", time.perf_counter() - t0, output.sql[:80])
 
         # Возвращаем обновлённое состояние графа
         return {

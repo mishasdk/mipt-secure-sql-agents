@@ -1,6 +1,7 @@
 import re
 import json
 import hashlib
+import time
 import numpy as np
 from openai import OpenAI
 from pathlib import Path
@@ -8,6 +9,9 @@ from typing import Optional, List, Dict, Any
 
 from app.config import get_config
 from app.generator.schema_loader import parse_ddl
+from app.logger import get_logger
+
+logger = get_logger("app.generator.rag")
 
 # Глобальная переменная для кэширования полной схемы БД (синглтон)
 _full_schema = None
@@ -156,7 +160,9 @@ class TableRetriever:
 
     def _compute_embeddings(self, texts: List[str]) -> np.ndarray:
         """Вычисляет эмбеддинги для списка текстов через OpenAI API."""
+        logger.info("tool=embeddings | action=compute | model=%s | n=%d", self.embedding_model, len(texts))
         emb = []
+        t0 = time.perf_counter()
         # Для каждого текста вызываем API эмбеддингов
         for t in texts:
             resp = self.client.embeddings.create(
@@ -171,6 +177,7 @@ class TableRetriever:
             # Извлекаем вектор из ответа (первый элемент списка data)
             emb.append(resp.data[0].embedding)
 
+        logger.info("tool=embeddings | elapsed=%.2fs | n=%d", time.perf_counter() - t0, len(emb))
         # Возвращаем как numpy-массив для удобства вычислений
         return np.array(emb)
 
@@ -184,6 +191,8 @@ class TableRetriever:
                 self._embeddings = self._compute_embeddings(self.descriptions)
                 # Сохраняем на диск
                 self._save_embeddings_to_cache()
+            else:
+                logger.info("tool=embeddings | action=loaded_from_cache | n=%d", len(self._embeddings))
 
     def _normalize_query(self, query: str) -> str:
         """Нормализует строку запроса для использования в качестве ключа кэша."""
@@ -198,15 +207,20 @@ class TableRetriever:
 
         # Если результат уже есть в кэше — возвращаем его (экономим токены)
         if norm_query in self._cache:
+            logger.info("tool=retriever | action=cache_hit | query=%r", query[:80])
             return self._cache[norm_query]
 
+        logger.info("tool=retriever | action=retrieve | query=%r | k=%d", query[:80], k)
         # Вычисляем эмбеддинги таблиц, если они ещё не вычислены
         self._ensure_embeddings()
         # Вычисляем эмбеддинг запроса через OpenAI (один вызов)
+        logger.info("tool=embeddings | action=query | model=%s", self.embedding_model)
+        t0 = time.perf_counter()
         q_emb = self.client.embeddings.create(
             input=query,   # оригинальный запрос, не нормализованный
             model=self.embedding_model
         ).data[0].embedding
+        logger.info("tool=embeddings | elapsed=%.2fs", time.perf_counter() - t0)
 
         # Нормы векторов таблиц для нормализации косинусного сходства
         norms = np.linalg.norm(self._embeddings, axis=1)
@@ -217,6 +231,7 @@ class TableRetriever:
         top_idx = np.argsort(scores)[-k:][::-1]
         # Формируем результат — список словарей с информацией о таблицах
         result = [self.tables_data[i] for i in top_idx]
+        logger.info("tool=retriever | result_tables=%s", [t["name"] for t in result])
 
         # Сохраняем результат в кэш, чтобы при повторном запросе не обращаться к API
         self._cache[norm_query] = result
@@ -239,7 +254,7 @@ def get_retriever() -> TableRetriever:
             # если путь относительный, считаем от корня проекта
             root = Path(__file__).resolve().parent.parent.parent
             ddl_path = root / config.schema_ddl_path
-        _retriever = TableRetriever(ddl_path=ddl_path)
+        _retriever = TableRetriever(ddl_path=ddl_path, embedding_model=config.embedding_model)
     return _retriever
 
 
