@@ -1,6 +1,12 @@
 import logging
 import sys
 
+# Глушим логи "app.*" до вызова setup_logging().
+# Без этого логи уходят в root logger, который может быть уже настроен uvicorn/langchain/etc.
+_app_logger = logging.getLogger("app")
+_app_logger.addHandler(logging.NullHandler())
+_app_logger.propagate = False
+
 
 def setup_logging(level: int = logging.INFO, configure_uvicorn: bool = False) -> None:
     handler = logging.StreamHandler(sys.stderr)
@@ -12,10 +18,10 @@ def setup_logging(level: int = logging.INFO, configure_uvicorn: bool = False) ->
     )
 
     app_logger = logging.getLogger("app")
-    if not app_logger.handlers:
-        app_logger.setLevel(level)
-        app_logger.addHandler(handler)
-        app_logger.propagate = False
+    app_logger.handlers.clear()  # убираем NullHandler
+    app_logger.setLevel(level)
+    app_logger.addHandler(handler)
+    app_logger.propagate = False
 
     if configure_uvicorn:
         for name in ("uvicorn.error", "uvicorn"):
