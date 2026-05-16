@@ -7,11 +7,15 @@ from app.generator.agent import GeneratorAgent
 from app.judge.agent import JudgeAgent
 from app.models.state import GraphState
 from app.orchestrator.nodes import check_termination, start_iteration
+from app.logger import get_logger
+
+logger = get_logger("app.orchestrator")
 
 
 def build_graph(llm: ChatOpenAI | None = None):
     if llm is None:
         config = get_config()
+        logger.info("Building graph | model=%s", config.model_name)
         llm = ChatOpenAI(
             base_url=config.openrouter_base_url,
             api_key=config.open_router_api_key,

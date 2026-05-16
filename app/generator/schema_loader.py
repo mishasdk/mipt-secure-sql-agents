@@ -1,6 +1,10 @@
 import re
 from typing import Dict, Any
 
+from app.logger import get_logger
+
+logger = get_logger("app.generator")
+
 
 def parse_ddl(sql_text: str) -> Dict[str, Any]:
     """Извлекает таблицы и столбцы из SQL-скрипта"""
@@ -46,4 +50,5 @@ def parse_ddl(sql_text: str) -> Dict[str, Any]:
 
         tables.append({"name": table_name, "columns": columns})
 
+    logger.debug("parse_ddl | tables_found=%d", len(tables))
     return {"tables": tables}
