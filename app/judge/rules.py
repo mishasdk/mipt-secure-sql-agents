@@ -6,6 +6,10 @@ from typing import Optional
 import yaml
 from pydantic import BaseModel
 
+from app.logger import get_logger
+
+logger = get_logger("app.judge")
+
 
 class ASTRule(BaseModel):
     id: str
@@ -31,4 +35,6 @@ def load_policy(path: Optional[str] = None) -> SecurityPolicy:
         path = Path(path)
 
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    return SecurityPolicy(**raw)
+    policy = SecurityPolicy(**raw)
+    logger.info("load_policy | path=%s | rules=%d", path, len(policy.rules))
+    return policy
