@@ -1,3 +1,5 @@
+import time
+
 from langchain_core.messages import AIMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
@@ -8,6 +10,9 @@ from app.models.schemas import (
     IssueType, Severity
 )
 from app.models.state import GraphState
+from app.logger import get_logger
+
+logger = get_logger("app.judge")
 
 VULN_CLASSES = {
     "SQL_INJ_CLASSIC": "Classic SQL injection via unsanitized input",
@@ -60,8 +65,18 @@ class JudgeAgent:
         # messages = [SystemMessage(content=self.prompt)] + state["messages"]
         # output: JudgeOutput = self.llm.invoke(messages)
         sql = self._extract_sql(state)
+        logger.info("JudgeAgent called | sql=%r", sql[:80])
+
         allowlist = set(self.policy.allowlist or [])
+        logger.info("tool=ast_checker | action=invoke | sql_len=%d", len(sql))
+        t0 = time.perf_counter()
         issues = run_ast_checks(sql, allowlist=allowlist)
+        logger.info(
+            "tool=ast_checker | elapsed=%.3fs | issues=%d | rules=%s",
+            time.perf_counter() - t0,
+            len(issues),
+            [i.rule_id for i in issues],
+        )
 
         if not issues:
             verdict = Verdict.APPROVED
@@ -73,6 +88,8 @@ class JudgeAgent:
             )
             risk_score = {"LOW": 2.0, "MEDIUM": 5.0, "HIGH": 9.0}[max_sev.severity]
             verdict = Verdict.APPROVED if risk_score < 5.0 else Verdict.REJECTED
+
+        logger.info("JudgeAgent done | verdict=%s | risk_score=%.1f", verdict.value, risk_score)
 
         output = JudgeOutput(
             verdict=verdict,
