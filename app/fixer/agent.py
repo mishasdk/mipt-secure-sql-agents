@@ -74,18 +74,19 @@ class FixerAgent:
         # Формируем системный промпт, подставляя схему
         system_prompt = FIXER_SYSTEM_PROMPT.format(schema_text=schema_text)
 
-        # Собираем последний SQL и замечания судьи
-        ai_messages = [msg for msg in state["messages"]
-                       if isinstance(msg, AIMessage)]
+        # Собираем последний SQL: ищем в обратном порядке первое сообщение с полем "sql".
+        # ai_messages[-1] всегда указывает на вывод судьи (JudgeOutput без поля "sql"),
+        # поэтому нужно пройтись по всей истории назад.
         last_sql = ""
-        if ai_messages:
-            # последнее сообщение от ИИ
-            last_ai = ai_messages[-1]
-            try:
-                # Парсим JSON, чтобы получить поле "sql"
-                last_sql = json.loads(last_ai.content).get("sql", "")
-            except Exception:
-                pass
+        for msg in reversed(state["messages"]):
+            if isinstance(msg, AIMessage):
+                try:
+                    data = json.loads(msg.content)
+                    if "sql" in data:
+                        last_sql = data["sql"]
+                        break
+                except Exception:
+                    pass
 
         # Получаем замечания от последнего вызова судьи
         judge_responses = state.get("judge_responses", [])
