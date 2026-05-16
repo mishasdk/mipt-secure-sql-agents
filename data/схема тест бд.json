@@ -1,0 +1,201 @@
+{
+  "dialect": "postgresql",
+  "tables": [
+    {
+      "name": "customer",
+      "description": "Таблица клиентов: содержит персональные данные и информацию о благосостоянии",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "INTEGER",
+          "description": "Уникальный идентификатор клиента",
+          "is_primary_key": true
+        },
+        {
+          "name": "first_name",
+          "type": "VARCHAR(100)",
+          "description": "Имя клиента"
+        },
+        {
+          "name": "last_name",
+          "type": "VARCHAR(100)",
+          "description": "Фамилия клиента"
+        },
+        {
+          "name": "gender",
+          "type": "VARCHAR(10)",
+          "description": "Пол (M/F/U)"
+        },
+        {
+          "name": "DOB",
+          "type": "DATE",
+          "description": "Дата рождения"
+        },
+        {
+          "name": "job_title",
+          "type": "VARCHAR(255)",
+          "description": "Должность клиента"
+        },
+        {
+          "name": "job_industry_category",
+          "type": "VARCHAR(100)",
+          "description": "Отрасль деятельности (например: Retail, Health, IT)"
+        },
+        {
+          "name": "wealth_segment",
+          "type": "VARCHAR(50)",
+          "description": "Сегмент благосостояния (Mass Customer, Affluent Customer, High Net Worth)"
+        },
+        {
+          "name": "deceased_indicator",
+          "type": "CHAR(1)",
+          "description": "Индикатор статуса (N - активен, Y - умер)"
+        },
+        {
+          "name": "owns_car",
+          "type": "CHAR(3)",
+          "description": "Наличие автомобиля (Yes/No)"
+        },
+        {
+          "name": "address",
+          "type": "VARCHAR(255)",
+          "description": "Адрес проживания"
+        },
+        {
+          "name": "postcode",
+          "type": "VARCHAR(10)",
+          "description": "Почтовый индекс"
+        },
+        {
+          "name": "state",
+          "type": "VARCHAR(50)",
+          "description": "Штат или регион (NSW, VIC, QLD и т.д.)"
+        },
+        {
+          "name": "country",
+          "type": "VARCHAR(50)",
+          "description": "Страна"
+        },
+        {
+          "name": "property_valuation",
+          "type": "INTEGER",
+          "description": "Оценка стоимости недвижимости"
+        }
+      ]
+    },
+    {
+      "name": "product",
+      "description": "Таблица продуктов: каталог товаров с ценами",
+      "columns": [
+        {
+          "name": "product_id",
+          "type": "INTEGER",
+          "description": "Уникальный идентификатор продукта",
+          "is_primary_key": true
+        },
+        {
+          "name": "brand",
+          "type": "VARCHAR(100)",
+          "description": "Бренд продукта"
+        },
+        {
+          "name": "product_line",
+          "type": "VARCHAR(100)",
+          "description": "Линейка продукта"
+        },
+        {
+          "name": "product_class",
+          "type": "VARCHAR(50)",
+          "description": "Класс продукта"
+        },
+        {
+          "name": "product_size",
+          "type": "VARCHAR(20)",
+          "description": "Размер"
+        },
+        {
+          "name": "list_price",
+          "type": "DECIMAL(10, 2)",
+          "description": "Розничная цена"
+        },
+        {
+          "name": "standard_cost",
+          "type": "DECIMAL(10, 2)",
+          "description": "Себестоимость"
+        }
+      ]
+    },
+    {
+      "name": "orders",
+      "description": "Таблица заказов: история транзакций клиентов",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "INTEGER",
+          "description": "Уникальный идентификатор заказа",
+          "is_primary_key": true
+        },
+        {
+          "name": "customer_id",
+          "type": "INTEGER",
+          "description": "ID клиента, сделавшего заказ",
+          "foreign_key": "customer.customer_id"
+        },
+        {
+          "name": "order_date",
+          "type": "DATE",
+          "description": "Дата совершения заказа"
+        },
+        {
+          "name": "online_order",
+          "type": "BOOLEAN",
+          "description": "Флаг онлайн-заказа (True/False)"
+        },
+        {
+          "name": "order_status",
+          "type": "VARCHAR(20)",
+          "description": "Статус заказа (Approved, Cancelled и т.д.)"
+        }
+      ]
+    },
+    {
+      "name": "order_items",
+      "description": "Таблица позиций заказа: детали каждой покупки в заказе",
+      "columns": [
+        {
+          "name": "order_item_id",
+          "type": "INTEGER",
+          "description": "Уникальный идентификатор позиции",
+          "is_primary_key": true
+        },
+        {
+          "name": "order_id",
+          "type": "INTEGER",
+          "description": "ID заказа, к которому относится позиция",
+          "foreign_key": "orders.order_id"
+        },
+        {
+          "name": "product_id",
+          "type": "INTEGER",
+          "description": "ID купленного продукта",
+          "foreign_key": "product.product_id"
+        },
+        {
+          "name": "quantity",
+          "type": "INTEGER",
+          "description": "Количество единиц товара"
+        },
+        {
+          "name": "item_list_price_at_sale",
+          "type": "DECIMAL(10, 2)",
+          "description": "Цена единицы товара на момент продажи"
+        },
+        {
+          "name": "item_standard_cost_at_sale",
+          "type": "DECIMAL(10, 2)",
+          "description": "Себестоимость единицы товара на момент продажи"
+        }
+      ]
+    }
+  ]
+}
